@@ -55,7 +55,13 @@ func main() {
 		errHandler(errors.New("Wrong Reddit url format."), false)
 	}
 	*url += ".json"
-	res, err := http.Get(*url)
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", *url, nil)
+	errHandler(err, true)
+	req.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36")
+
+	res, err := client.Do(req)
 	errHandler(err, true)
 	if res.StatusCode != 200 {
 		errHandler(errors.New(res.Status), false)
