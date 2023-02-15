@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-func saveMergedFile(filename string, video []byte, audio []byte) {
+func saveFiles(videoName string, video []byte, audioName string, audio []byte) {
 
 }
 
