@@ -12,11 +12,42 @@ import (
 	"strings"
 )
 
-func getDashXml(url string) {
+func saveMergedFile(filename string, video []byte, audio []byte) {
 
 }
 
-func getVideo(res *http.Response) {
+func getVideo(url string) []byte {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	errHandler(err, true)
+	res, err := client.Do(req)
+	errHandler(err, true)
+
+	body, err := io.ReadAll(res.Body)
+	errHandler(err, true)
+	if res.StatusCode != 200 {
+		errHandler(errors.New(res.Status), false)
+	}
+	return body
+}
+
+func getAudio(baseUrl string) []byte {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", baseUrl+"DASH_audio.mp4", nil)
+	errHandler(err, true)
+	res, err := client.Do(req)
+	errHandler(err, true)
+
+	body, err := io.ReadAll(res.Body)
+	errHandler(err, true)
+	if res.StatusCode != 200 {
+		//errHandler(errors.New(res.Status), false)
+		return nil
+	}
+	return body
+}
+
+func processData(res *http.Response) {
 	var jsonObj []map[string]any
 
 	defer res.Body.Close()
@@ -31,8 +62,12 @@ func getVideo(res *http.Response) {
 	if media == nil {
 		errHandler(errors.New("No video."), false)
 	}
-	baseUrl := strings.Split(media.(map[string]any)["reddit_video"].(map[string]any)["dash_url"].(string), "DASHPlaylist.mpd")[0]
-	log.Println(baseUrl)
+	videoUrl := strings.Split(media.(map[string]any)["reddit_video"].(map[string]any)["fallback_url"].(string), "?")[0]
+	baseUrl := children[0].(map[string]any)["data"].(map[string]any)["url"].(string) + "/"
+	video := getVideo(videoUrl)
+	audio := getAudio(baseUrl)
+	log.Println(video)
+	log.Println(audio)
 }
 
 func errHandler(err error, fatal bool) {
@@ -66,5 +101,5 @@ func main() {
 	if res.StatusCode != 200 {
 		errHandler(errors.New(res.Status), false)
 	}
-	getVideo(res)
+	processData(res)
 }
