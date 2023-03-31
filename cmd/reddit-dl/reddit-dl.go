@@ -21,37 +21,6 @@ func saveFiles(videoName string, video []byte, audioName string, audio []byte) {
 	log.Printf("Saved as %s\n", videoName)
 }
 
-func getVideo(url string) []byte {
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
-	util.ErrHandler(err, true)
-	res, err := client.Do(req)
-	util.ErrHandler(err, true)
-
-	body, err := io.ReadAll(res.Body)
-	util.ErrHandler(err, true)
-	if res.StatusCode != 200 {
-		util.ErrHandler(errors.New(res.Status), false)
-	}
-	return body
-}
-
-func getAudio(baseUrl string) []byte {
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", baseUrl+"DASH_audio.mp4", nil)
-	util.ErrHandler(err, true)
-	res, err := client.Do(req)
-	util.ErrHandler(err, true)
-
-	body, err := io.ReadAll(res.Body)
-	util.ErrHandler(err, true)
-	if res.StatusCode != 200 {
-		//util.ErrHandler(errors.New(res.Status), false)
-		return nil
-	}
-	return body
-}
-
 func processData(res *http.Response) {
 	var jsonObj []map[string]any
 
@@ -69,8 +38,8 @@ func processData(res *http.Response) {
 	}
 	videoUrl := strings.Split(mediaObj.(map[string]any)["reddit_video"].(map[string]any)["fallback_url"].(string), "?")[0]
 	baseUrl := children[0].(map[string]any)["data"].(map[string]any)["url"].(string) + "/"
-	video := getVideo(videoUrl)
-	audio := getAudio(baseUrl)
+	video := media.GetVideo(videoUrl)
+	audio := media.GetAudio(baseUrl)
 	media.SaveToSeperateFiles("video.mp4", video, "audio.mp4", audio)
 }
 
