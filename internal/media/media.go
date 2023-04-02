@@ -3,9 +3,9 @@ package media
 import (
 	"errors"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/pierre0210/reddit-dl/internal/util"
@@ -13,11 +13,11 @@ import (
 )
 
 func SaveToSeperateFiles(videoName string, video []byte, audioName string, audio []byte) {
-	err := ioutil.WriteFile(videoName, video, 0660)
+	err := os.WriteFile(videoName, video, 0660)
 	util.ErrHandler(err, true)
 	log.Printf("Saved video as %s\n", videoName)
 
-	err = ioutil.WriteFile(audioName, audio, 0660)
+	err = os.WriteFile(audioName, audio, 0660)
 	util.ErrHandler(err, true)
 	log.Printf("Saved audio as %s\n", audioName)
 }
