@@ -5,8 +5,6 @@ import (
 	"errors"
 	"flag"
 	"io"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -15,13 +13,7 @@ import (
 	"github.com/pierre0210/reddit-dl/internal/util"
 )
 
-func saveFiles(videoName string, video []byte, audioName string, audio []byte) {
-	err := ioutil.WriteFile(videoName, video, 0)
-	util.ErrHandler(err, true)
-	log.Printf("Saved as %s\n", videoName)
-}
-
-func processData(res *http.Response) {
+func processData(res *http.Response, toGif bool) {
 	var jsonObj []map[string]any
 
 	defer res.Body.Close()
@@ -34,22 +26,27 @@ func processData(res *http.Response) {
 	children := data["children"].([]any)
 	mediaObj := children[0].(map[string]any)["data"].(map[string]any)["media"]
 	if mediaObj == nil {
-		util.ErrHandler(errors.New("No video."), false)
+		util.ErrHandler(errors.New("no video"), false)
 	}
 	videoUrl := strings.Split(mediaObj.(map[string]any)["reddit_video"].(map[string]any)["fallback_url"].(string), "?")[0]
 	baseUrl := children[0].(map[string]any)["data"].(map[string]any)["url"].(string) + "/"
 	video := media.GetVideo(videoUrl)
 	audio := media.GetAudio(baseUrl)
 	media.SaveToSeperateFiles("video.mp4", video, "audio.mp4", audio)
+
+	if toGif {
+		media.Convert2Gif("video.mp4")
+	}
 }
 
 func main() {
 	url := flag.String("u", "", "Reddit post url.")
+	toGif := flag.Bool("g", false, "Convert to GIF.")
 	flag.Parse()
 
 	match, _ := regexp.Match("https://www.reddit.com/r/([a-zA-Z_]+)/comments/([a-z0-9]+)/([a-z_]+)/", []byte(*url))
 	if !match {
-		util.ErrHandler(errors.New("Wrong Reddit url format."), false)
+		util.ErrHandler(errors.New("wrong Reddit url format"), false)
 	}
 	*url += ".json"
 
@@ -63,5 +60,5 @@ func main() {
 	if res.StatusCode != 200 {
 		util.ErrHandler(errors.New(res.Status), false)
 	}
-	processData(res)
+	processData(res, *toGif)
 }

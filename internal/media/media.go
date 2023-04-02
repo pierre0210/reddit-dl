@@ -6,16 +6,18 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/pierre0210/reddit-dl/internal/util"
+	ffmpeg "github.com/u2takey/ffmpeg-go"
 )
 
 func SaveToSeperateFiles(videoName string, video []byte, audioName string, audio []byte) {
-	err := ioutil.WriteFile(videoName, video, 0)
+	err := ioutil.WriteFile(videoName, video, 0660)
 	util.ErrHandler(err, true)
 	log.Printf("Saved video as %s\n", videoName)
 
-	err = ioutil.WriteFile(audioName, audio, 0)
+	err = ioutil.WriteFile(audioName, audio, 0660)
 	util.ErrHandler(err, true)
 	log.Printf("Saved audio as %s\n", audioName)
 }
@@ -49,4 +51,9 @@ func GetAudio(baseUrl string) []byte {
 		return nil
 	}
 	return body
+}
+
+func Convert2Gif(videoPath string) {
+	err := ffmpeg.Input(videoPath).Output(strings.Split(videoPath, ".mp4")[0] + ".gif").OverWriteOutput().ErrorToStdOut().Run()
+	util.ErrHandler(err, true)
 }
