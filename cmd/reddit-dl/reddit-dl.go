@@ -13,13 +13,10 @@ import (
 	"github.com/pierre0210/reddit-dl/internal/util"
 )
 
-func processData(res *http.Response, toGif bool) {
+func processData(client *http.Client, jsonStr []byte, toGif bool) {
 	var jsonObj []map[string]any
 
-	defer res.Body.Close()
-	jsonStr, err := io.ReadAll(res.Body)
-	util.ErrHandler(err, true)
-	err = json.Unmarshal(jsonStr, &jsonObj)
+	err := json.Unmarshal(jsonStr, &jsonObj)
 	util.ErrHandler(err, true)
 
 	data := jsonObj[0]["data"].(map[string]any)
@@ -30,9 +27,8 @@ func processData(res *http.Response, toGif bool) {
 	}
 	videoUrl := strings.Split(mediaObj.(map[string]any)["reddit_video"].(map[string]any)["fallback_url"].(string), "?")[0]
 	baseUrl := children[0].(map[string]any)["data"].(map[string]any)["url"].(string) + "/"
-	video := media.GetVideo(videoUrl)
-	audio := media.GetAudio(baseUrl)
-	media.SaveToSeperateFiles("video.mp4", video, "audio.mp4", audio)
+	media.GetVideo(client, videoUrl, "video.mp4")
+	media.GetAudio(client, baseUrl, "audio.mp4")
 
 	if toGif {
 		media.Convert2Gif("video.mp4")
@@ -60,5 +56,9 @@ func main() {
 	if res.StatusCode != 200 {
 		util.ErrHandler(errors.New(res.Status), false)
 	}
-	processData(res, *toGif)
+
+	jsonStr, err := io.ReadAll(res.Body)
+	util.ErrHandler(err, true)
+	res.Body.Close()
+	processData(client, jsonStr, *toGif)
 }

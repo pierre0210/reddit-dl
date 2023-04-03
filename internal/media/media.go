@@ -12,45 +12,42 @@ import (
 	ffmpeg "github.com/u2takey/ffmpeg-go"
 )
 
-func SaveToSeperateFiles(videoName string, video []byte, audioName string, audio []byte) {
-	err := os.WriteFile(videoName, video, 0660)
-	util.ErrHandler(err, true)
-	log.Printf("Saved video as %s\n", videoName)
-
-	err = os.WriteFile(audioName, audio, 0660)
-	util.ErrHandler(err, true)
-	log.Printf("Saved audio as %s\n", audioName)
-}
-
-func GetVideo(url string) []byte {
-	client := &http.Client{}
+func GetVideo(client *http.Client, url string, videoName string) {
 	req, err := http.NewRequest("GET", url, nil)
 	util.ErrHandler(err, true)
 	res, err := client.Do(req)
 	util.ErrHandler(err, true)
-
-	body, err := io.ReadAll(res.Body)
-	util.ErrHandler(err, true)
 	if res.StatusCode != 200 {
 		util.ErrHandler(errors.New(res.Status), false)
+		return
 	}
-	return body
+
+	videoBuff, err := io.ReadAll(res.Body)
+	util.ErrHandler(err, true)
+	res.Body.Close()
+
+	err = os.WriteFile(videoName, videoBuff, 0660)
+	util.ErrHandler(err, true)
+	log.Printf("Saved video as %s\n", videoName)
 }
 
-func GetAudio(baseUrl string) []byte {
-	client := &http.Client{}
+func GetAudio(client *http.Client, baseUrl string, audioName string) {
 	req, err := http.NewRequest("GET", baseUrl+"DASH_audio.mp4", nil)
 	util.ErrHandler(err, true)
 	res, err := client.Do(req)
 	util.ErrHandler(err, true)
-
-	body, err := io.ReadAll(res.Body)
-	util.ErrHandler(err, true)
 	if res.StatusCode != 200 {
 		util.ErrHandler(errors.New(res.Status), false)
-		return nil
+		return
 	}
-	return body
+
+	audioBuff, err := io.ReadAll(res.Body)
+	util.ErrHandler(err, true)
+	res.Body.Close()
+
+	err = os.WriteFile(audioName, audioBuff, 0660)
+	util.ErrHandler(err, true)
+	log.Printf("Saved audio as %s\n", audioName)
 }
 
 func Convert2Gif(videoPath string) {
