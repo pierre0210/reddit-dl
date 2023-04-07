@@ -53,4 +53,6 @@ func GetAudio(client *http.Client, baseUrl string, audioName string) {
 func Convert2Gif(videoPath string) {
 	err := ffmpeg.Input(videoPath).Output(strings.Split(videoPath, ".mp4")[0] + ".gif").OverWriteOutput().ErrorToStdOut().Run()
 	util.ErrHandler(err, true)
+	err = os.Remove(videoPath)
+	util.ErrHandler(err, true)
 }
