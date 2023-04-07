@@ -13,7 +13,7 @@ import (
 	"github.com/pierre0210/reddit-dl/internal/util"
 )
 
-func processData(client *http.Client, jsonStr []byte, fileName string, toGif bool) {
+func processData(client *http.Client, jsonStr []byte, fileName string, toGif bool, merge bool) {
 	var jsonObj []map[string]any
 
 	err := json.Unmarshal(jsonStr, &jsonObj)
@@ -28,18 +28,24 @@ func processData(client *http.Client, jsonStr []byte, fileName string, toGif boo
 	videoUrl := strings.Split(mediaObj.(map[string]any)["reddit_video"].(map[string]any)["fallback_url"].(string), "?")[0]
 	baseUrl := children[0].(map[string]any)["data"].(map[string]any)["url"].(string) + "/"
 
-	media.GetVideo(client, videoUrl, fileName+".mp4")
+	videoName := fileName + "_video.mp4"
+	audioName := fileName + "_audio.mp4"
+	mergeName := fileName + "_merge.mp4"
+
+	media.GetVideo(client, videoUrl, videoName)
 
 	if toGif {
-		media.Convert2Gif(fileName + ".mp4")
-	} else {
-		media.GetAudio(client, baseUrl, fileName+".mp4")
+		media.Convert2Gif(videoName)
+	} else if merge {
+		media.GetAudio(client, baseUrl, audioName)
+		media.MergeFiles(videoName, audioName, mergeName)
 	}
 }
 
 func main() {
 	url := flag.String("u", "", "Reddit post url.")
 	toGif := flag.Bool("g", false, "Convert to GIF.")
+	merge := flag.Bool("m", false, "Merge video and audio if exists.")
 	flag.Parse()
 
 	match, _ := regexp.Match("https://www.reddit.com/r/([a-zA-Z_]+)/comments/([a-z0-9]+)/([a-z_]+)/", []byte(*url))
@@ -65,5 +71,5 @@ func main() {
 
 	splittedUrl := strings.Split(*url, "/")
 
-	processData(client, jsonStr, splittedUrl[len(splittedUrl)-2], *toGif)
+	processData(client, jsonStr, splittedUrl[len(splittedUrl)-2], *toGif, *merge)
 }

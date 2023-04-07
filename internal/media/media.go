@@ -54,5 +54,20 @@ func Convert2Gif(videoPath string) {
 	err := ffmpeg.Input(videoPath).Output(strings.Split(videoPath, ".mp4")[0] + ".gif").OverWriteOutput().ErrorToStdOut().Run()
 	util.ErrHandler(err, true)
 	err = os.Remove(videoPath)
+	util.ErrHandler(err, false)
+}
+
+func MergeFiles(videoPath string, audioPath string, outputPath string) {
+	videoStream := ffmpeg.Input(videoPath)
+	audioStream := ffmpeg.Input(audioPath)
+
+	err := ffmpeg.Concat([]*ffmpeg.Stream{
+		videoStream, audioStream,
+	}, ffmpeg.KwArgs{"v": 1, "a": 1}).Output(outputPath).OverWriteOutput().ErrorToStdOut().Run()
 	util.ErrHandler(err, true)
+
+	err = os.Remove(videoPath)
+	util.ErrHandler(err, false)
+	err = os.Remove(audioPath)
+	util.ErrHandler(err, false)
 }
